@@ -1,0 +1,40 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip git zip unzip openjdk-8-jdk \
+            libffi-dev libssl-dev libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev \
+            libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev \
+            zlib1g-dev libgstreamer1.0 libgstreamer1.0-dev libmtdev-dev \
+            build-essential autoconf libtool pkg-config libjpeg-dev
+
+          pip install --user buildozer cython
+
+      - name: Build APK
+        run: |
+          export PATH=$PATH:~/.local/bin
+          buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: HelloApp-debug-apk
+          path: bin/*.apk
