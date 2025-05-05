@@ -1,11 +1,9 @@
-# ⚠️ Do NOT run `buildozer init` if you're creating the .spec file manually
-
 name: Build HelloWorld APK
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger the workflow on push to main branch
 
 jobs:
   build:
@@ -59,9 +57,9 @@ jobs:
         run: |
           buildozer android debug
 
-      # Upload the APK to GitHub as an artifact (optional)
+      # Upload the APK as artifact (adjust the path correctly)
       - name: Upload APK as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v2  # Use v2 of the action
         with:
           name: hello-world-apk
-          path: bin/helloworld-0.1-debug.apk
+          path: bin/helloworld-0.1-debug.apk  # This should match the output location for your APK
