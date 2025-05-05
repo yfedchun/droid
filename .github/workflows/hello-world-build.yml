@@ -1,34 +1,67 @@
 # ⚠️ Do NOT run `buildozer init` if you're creating the .spec file manually
 
-# Write a minimal working buildozer.spec file for Kivy
-cat <<EOF > buildozer.spec
-[app]
-title = HelloWorld
-package.name = helloworld
-package.domain = org.test
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas
-version = 0.1
-requirements = python3,kivy
-orientation = portrait
-fullscreen = 1
-android.api = 33
-android.ndk = 25b
-android.arch = armeabi-v7a
+name: Build HelloWorld APK
 
-[buildozer]
-log_level = 2
-warn_on_root = 1
-EOF
+on:
+  push:
+    branches:
+      - main
 
-# Write a simple Kivy Hello World app
-echo 'from kivy.app import App
-from kivy.uix.label import Label
-class MyApp(App):
-    def build(self):
-        return Label(text="Hello, World!")
+jobs:
+  build:
+    runs-on: ubuntu-22.04  # Use the latest Ubuntu runner
 
-MyApp().run()' > main.py
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-# Build the APK in debug mode
-buildozer android debug
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Buildozer and Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip python3-setuptools python3-dev build-essential
+          pip install buildozer
+
+      - name: Create buildozer.spec file
+        run: |
+          echo '[app]
+          title = HelloWorld
+          package.name = helloworld
+          package.domain = org.test
+          source.dir = .
+          source.include_exts = py,png,jpg,kv,atlas
+          version = 0.1
+          requirements = python3,kivy
+          orientation = portrait
+          fullscreen = 1
+          android.api = 33
+          android.ndk = 25b
+          android.arch = armeabi-v7a
+
+          [buildozer]
+          log_level = 2
+          warn_on_root = 1' > buildozer.spec
+
+      - name: Create the Python app
+        run: |
+          echo 'from kivy.app import App
+          from kivy.uix.label import Label
+          class MyApp(App):
+              def build(self):
+                  return Label(text="Hello, World!")
+          MyApp().run()' > main.py
+
+      - name: Build APK using Buildozer
+        run: |
+          buildozer android debug
+
+      # Upload the APK to GitHub as an artifact (optional)
+      - name: Upload APK as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: hello-world-apk
+          path: bin/helloworld-0.1-debug.apk
