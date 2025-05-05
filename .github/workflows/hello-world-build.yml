@@ -61,7 +61,7 @@ jobs:
 
       # Upload the APK to GitHub as an artifact (optional)
       - name: Upload APK as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: hello-world-apk
           path: bin/helloworld-0.1-debug.apk
