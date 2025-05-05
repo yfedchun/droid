@@ -34,7 +34,7 @@ jobs:
           buildozer android debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@3e65b772db382c42b7165fcb6366f7cbe5a340b4
         with:
           name: HelloApp-debug-apk
           path: bin/*.apk
