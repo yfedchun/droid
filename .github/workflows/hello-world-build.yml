@@ -1,58 +1,90 @@
-name: Manual APK Builder
+name: Build Hello World APK
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-apk:
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout code
-        run: |
-          git clone ${{ github.server_url }}/${{ github.repository }} .
-      
-      - name: Set up Python and Buildozer
-        run: |
-          sudo apt update
-          sudo apt install -y python3-pip python3-setuptools python3-dev build-essential zip
-          pip install --upgrade pip
-          pip install buildozer
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Create spec and app
-        run: |
-          echo '[app]
-          title = HelloWorld
-          package.name = helloworld
-          package.domain = org.test
-          source.dir = .
-          source.include_exts = py,png,jpg,kv,atlas
-          version = 0.1
-          requirements = python3,kivy
-          orientation = portrait
-          fullscreen = 1
-          android.api = 33
-          android.ndk = 25b
-          android.arch = armeabi-v7a
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-          [buildozer]
-          log_level = 2
-          warn_on_root = 1' > buildozer.spec
+    - name: Install system dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          python3-pip \
+          python3-setuptools \
+          python3-dev \
+          build-essential \
+          zip \
+          openjdk-17-jdk \
+          unzip \
+          git \
+          pkg-config \
+          libgl1-mesa-dev \
+          libffi-dev \
+          libssl-dev \
+          libsqlite3-dev \
+          zlib1g-dev \
+          libjpeg-dev \
+          libpng-dev \
+          cython
 
-          echo 'from kivy.app import App
-          from kivy.uix.label import Label
-          class MyApp(App):
-              def build(self):
-                  return Label(text="Hello, World!")
-          MyApp().run()' > main.py
+    - name: Install buildozer and Cython via pip
+      run: |
+        pip install --upgrade pip
+        pip install buildozer cython
 
-      - name: Build APK
-        run: |
-          buildozer android debug
+    - name: Initialize buildozer project
+      run: |
+        buildozer init
 
-      - name: Base64 encode APK (print to log)
-        run: |
-          echo "::group::APK Base64 (copy/paste and decode)"
-          base64 bin/helloworld-0.1-debug.apk
-          echo "::endgroup::"
+        # Overwrite the default buildozer.spec with minimal config
+        cat <<EOF > buildozer.spec
+[app]
+title = HelloWorld
+package.name = helloworld
+package.domain = org.test
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas
+version = 0.1
+requirements = python3,kivy
+orientation = portrait
+fullscreen = 1
+android.api = 33
+android.ndk = 25b
+android.arch = armeabi-v7a
+
+[buildozer]
+log_level = 2
+warn_on_root = 1
+EOF
+
+        # Create main.py with a simple Kivy app
+        cat <<EOF > main.py
+from kivy.app import App
+from kivy.uix.label import Label
+
+class MyApp(App):
+    def build(self):
+        return Label(text="Hello, World!")
+
+MyApp().run()
+EOF
+
+    - name: Build APK
+      run: buildozer android debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: HelloWorld-APK
+        path: bin/*.apk
