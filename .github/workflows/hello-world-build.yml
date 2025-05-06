@@ -34,7 +34,34 @@ jobs:
       - name: Initialize buildozer project
         run: |
           buildozer init
-          cat <<EOF > buildozer.spec
-[app]
-title = HelloWorld
-pac
+          echo "[app]" > buildozer.spec
+          echo "title = HelloWorld" >> buildozer.spec
+          echo "package.name = helloworld" >> buildozer.spec
+          echo "package.domain = org.test" >> buildozer.spec
+          echo "source.dir = ." >> buildozer.spec
+          echo "source.include_exts = py,png,jpg,kv,atlas" >> buildozer.spec
+          echo "version = 0.1" >> buildozer.spec
+          echo "requirements = python3,kivy" >> buildozer.spec
+          echo "orientation = portrait" >> buildozer.spec
+          echo "fullscreen = 1" >> buildozer.spec
+          echo "android.api = 33" >> buildozer.spec
+          echo "android.ndk = 25b" >> buildozer.spec
+          echo "android.arch = armeabi-v7a" >> buildozer.spec
+          echo "" >> buildozer.spec
+          echo "[buildozer]" >> buildozer.spec
+          echo "log_level = 2" >> buildozer.spec
+          echo "warn_on_root = 1" >> buildozer.spec
+
+      - name: Create Hello World app
+        run: |
+          echo 'from kivy.app import App\nfrom kivy.uix.label import Label\n\nclass MyApp(App):\n    def build(self):\n        return Label(text="Hello, World!")\n\nMyApp().run()' > main.py
+
+      - name: Build APK
+        run: |
+          buildozer android debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: hello-world-apk
+          path: bin/*.apk
