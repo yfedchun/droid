@@ -50,6 +50,7 @@ jobs:
 
         # Overwrite buildozer.spec
         cat <<EOF > buildozer.spec
+        
 [app]
 title = HelloWorld
 package.name = helloworld
