@@ -1,8 +1,54 @@
+name: Build HelloWorld APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          python3-pip \
+          git \
+          zip \
+          openjdk-17-jdk \
+          unzip \
+          libncurses5 \
+          libffi-dev \
+          libssl-dev \
+          libsqlite3-dev \
+          zlib1g-dev \
+          libjpeg-dev \
+          build-essential \
+          libgl1-mesa-dev \
+          libgles2-mesa-dev \
+          python3-setuptools \
+          python3-wheel \
+          python3-dev \
+          cython
+
+    - name: Install buildozer
+      run: |
+        pip install --upgrade pip
+        pip install buildozer
+
     - name: Initialize buildozer project
       run: |
         buildozer init
 
-        # Overwrite the default buildozer.spec with minimal config
+        # Overwrite buildozer.spec
         cat <<EOF > buildozer.spec
 [app]
 title = HelloWorld
@@ -23,7 +69,7 @@ log_level = 2
 warn_on_root = 1
 EOF
 
-        # Create main.py with a simple Kivy app
+        # Create a basic Hello World app
         cat <<EOF > main.py
 from kivy.app import App
 from kivy.uix.label import Label
@@ -34,3 +80,13 @@ class MyApp(App):
 
 MyApp().run()
 EOF
+
+    - name: Build APK
+      run: |
+        buildozer android debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: HelloWorld-APK
+        path: bin/*.apk
