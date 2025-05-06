@@ -1,30 +1,26 @@
-name: Build HelloWorld APK
+name: Manual APK Builder
 
 on:
   push:
-    branches:
-      - main  # Trigger the workflow on push to main branch
+    branches: [main]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04  # Use the latest Ubuntu runner
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install Buildozer and Dependencies
+        run: |
+          git clone ${{ github.server_url }}/${{ github.repository }} .
+      
+      - name: Set up Python and Buildozer
         run: |
           sudo apt update
-          sudo apt install -y python3-pip python3-setuptools python3-dev build-essential
+          sudo apt install -y python3-pip python3-setuptools python3-dev build-essential zip
+          pip install --upgrade pip
           pip install buildozer
 
-      - name: Create buildozer.spec file
+      - name: Create spec and app
         run: |
           echo '[app]
           title = HelloWorld
@@ -44,8 +40,6 @@ jobs:
           log_level = 2
           warn_on_root = 1' > buildozer.spec
 
-      - name: Create the Python app
-        run: |
           echo 'from kivy.app import App
           from kivy.uix.label import Label
           class MyApp(App):
@@ -53,13 +47,12 @@ jobs:
                   return Label(text="Hello, World!")
           MyApp().run()' > main.py
 
-      - name: Build APK using Buildozer
+      - name: Build APK
         run: |
           buildozer android debug
 
-      # Upload the APK as artifact (adjust the path correctly)
-      - name: Upload APK as artifact
-        uses: actions/upload-artifact@v2  # Use v2 of the action
-        with:
-          name: hello-world-apk
-          path: bin/helloworld-0.1-debug.apk  # This should match the output location for your APK
+      - name: Base64 encode APK (print to log)
+        run: |
+          echo "::group::APK Base64 (copy/paste and decode)"
+          base64 bin/helloworld-0.1-debug.apk
+          echo "::endgroup::"
